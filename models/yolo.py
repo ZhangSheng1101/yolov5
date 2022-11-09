@@ -389,3 +389,8 @@ if __name__ == '__main__':
 
     else:  # report fused model summary
         model.fuse()
+
+    ckpt = {
+        'model': deepcopy(model).half()
+    }
+    torch.save(ckpt, 'test.pt')

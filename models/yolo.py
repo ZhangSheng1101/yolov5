@@ -393,4 +393,4 @@ if __name__ == '__main__':
     ckpt = {
         'model': deepcopy(model).half()
     }
-    torch.save(ckpt, 'test.pt')
+    torch.save(ckpt, 'yolo.pt')

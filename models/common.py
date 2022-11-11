@@ -588,6 +588,34 @@ class DetectMultiBackend(nn.Module):
             for _ in range(2 if self.jit else 1):  #
                 self.forward(im)  # warmup
 
+    def verified_forward(self, im):
+        # verified
+        # YOLOv5 MultiBackend inference
+        b, ch, h, w = im.shape  # batch, channel, height, width
+        if self.fp16 and im.dtype != torch.float16:
+            im = im.half()  # to FP16
+        if self.nhwc:
+            im = im.permute(0, 2, 3, 1)  # torch BCHW to numpy BHWC shape(1,320,192,3)
+
+        if self.pt:  # PyTorch
+            y = self.model(im)
+        elif self.onnx:  # ONNX Runtime
+            im = im.cpu().numpy()  # torch to numpy
+            y = self.session.run(self.output_names, {self.session.get_inputs()[0].name: im})
+        else:  # TensorFlow (SavedModel, GraphDef, Lite, Edge TPU)
+            print('ONLY SUPPORT FOR PT AND ONNX.')
+
+        if isinstance(y, (list, tuple)):
+            return self.from_numpy(y[0]) if len(y) == 1 else [self.from_numpy(x) for x in y]
+        else:
+            return self.from_numpy(y)
+
+
+
+    def verified(self, imgsz=(1, 3, 512, 512)):
+        im = torch.randn(*imgsz, dtype=torch.half if self.fp16 else torch.float, device=self.device)  # input
+        return self.verified_forward(im)
+
     @staticmethod
     def _model_type(p='path/to/model.pt'):
         # Return model type from model path, i.e. path='path/to/model.onnx' -> type=onnx

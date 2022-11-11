@@ -34,8 +34,19 @@ def run(
     imgsz = check_img_size(imgsz, s=stride)  # check image size
 
     # verified
+    LOGGER.info(f"pt file forwarding...")
     model.verified(imgsz=(1, 3, *imgsz))
     print(model)
+
+    LOGGER.info(f"onnx file forwarding...")
+    onnx_weights = Path(str(weights).replace('.pt', '.onnx'))
+    onnx_model = DetectMultiBackend(onnx_weights, device=device, fp16=half)
+
+    stride, names, pt = model.stride, model.names, model.pt
+    imgsz = check_img_size(imgsz, s=stride)  # check image size
+
+    # verified
+    model.verified(imgsz=(1, 3, *imgsz))
 
 
 def parse_opt():
